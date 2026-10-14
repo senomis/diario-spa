@@ -47,9 +47,10 @@ function errorText(e) {
 }
 function authErrorText(e) {
   const msg = e?.message || String(e);
-  if (e?.status === 429 || /rate limit/i.test(msg)) return 'Troppe email inviate di recente: riprova più tardi o usa il codice dell\'ultima email ricevuta.';
-  if (/signups not allowed|user not found/i.test(msg)) return 'Questo indirizzo non è abilitato. Chiedi al proprietario di aggiungerlo.';
-  if (/expired|invalid/i.test(msg)) return 'Codice non valido o scaduto: richiedi una nuova email.';
+  if (/invalid login credentials/i.test(msg)) return 'Email o password non corretti.';
+  if (e?.status === 429 || /rate limit/i.test(msg)) return 'Troppi tentativi: riprova tra qualche minuto.';
+  if (/should be different/i.test(msg)) return 'La nuova password deve essere diversa da quella attuale.';
+  if (/password should be at least/i.test(msg)) return 'La password è troppo corta.';
   return errorText(e);
 }
 
@@ -513,25 +514,15 @@ document.addEventListener('visibilitychange', () => {
 
 // ---------------------------------------------------------------- Accesso
 
-let pendingEmail = '';
-
-function showLoginStep(step) {
-  $('#login-form').hidden = step !== 'email';
-  $('#code-form').hidden = step !== 'code';
-  $('#login-error').textContent = '';
-  $('#code-error').textContent = '';
-}
-
 $('#login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('button');
-  pendingEmail = e.target.elements.email.value.trim().toLowerCase();
+  const f = e.target;
+  const btn = f.querySelector('button');
+  $('#login-error').textContent = '';
   btn.disabled = true;
   try {
-    await state.backend.sendLink(pendingEmail);
-    $('#sent-to').textContent = pendingEmail;
-    showLoginStep('code');
-    $('#code-form').elements.code.focus();
+    await state.backend.signIn(f.elements.email.value.trim(), f.elements.password.value);
+    f.elements.password.value = '';
   } catch (err) {
     $('#login-error').textContent = authErrorText(err);
   } finally {
@@ -539,20 +530,32 @@ $('#login-form').addEventListener('submit', async (e) => {
   }
 });
 
-$('#code-form').addEventListener('submit', async (e) => {
+$('#btn-password').addEventListener('click', () => {
+  $('#password-form').reset();
+  $('#password-error').textContent = '';
+  $('#password-dialog').showModal();
+});
+$('#btn-password-cancel').addEventListener('click', () => $('#password-dialog').close());
+
+$('#password-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const btn = e.target.querySelector('button[type=submit]');
+  const f = e.target;
+  if (f.elements.pw1.value !== f.elements.pw2.value) {
+    $('#password-error').textContent = 'Le due password non coincidono.';
+    return;
+  }
+  const btn = f.querySelector('button[type=submit]');
   btn.disabled = true;
   try {
-    await state.backend.verifyCode(pendingEmail, e.target.elements.code.value.replace(/\s/g, ''));
+    await state.backend.changePassword(f.elements.pw1.value);
+    $('#password-dialog').close();
+    toast('Password aggiornata');
   } catch (err) {
-    $('#code-error').textContent = authErrorText(err);
+    $('#password-error').textContent = authErrorText(err);
   } finally {
     btn.disabled = false;
   }
 });
-
-$('#btn-other-email').addEventListener('click', () => showLoginStep('email'));
 
 $('#btn-logout').addEventListener('click', async () => {
   await state.backend.signOut();
@@ -565,7 +568,7 @@ async function showFor(user) {
   $('#app-view').hidden = !user;
   if (!user) {
     state.loaded = false;
-    showLoginStep('email');
+    $('#login-error').textContent = '';
     return;
   }
   await refresh();
@@ -574,6 +577,7 @@ async function showFor(user) {
 async function boot() {
   state.backend = await createBackend(SUPABASE_URL, SUPABASE_ANON_KEY);
   $('#demo-banner').hidden = state.backend.mode !== 'demo';
+  $('#btn-password').hidden = state.backend.mode === 'demo';
   state.backend.onAuthChange((user) => {
     if ((user?.id ?? null) !== (state.user?.id ?? null)) showFor(user);
   });

@@ -44,7 +44,7 @@ h2 { font-size: 1.1rem; margin: 26px 0 10px; font-weight: 700; }
 /* Barra in alto e navigazione in basso */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
 .topbar .in { max-width: 680px; margin: 0 auto; padding: 8px 16px; display: flex; align-items: center; gap: 14px; font-size: .9rem; }
-.topbar .brand { font-weight: 800; margin-right: auto; }
+.topbar .brand { font-weight: 800; margin-right: auto; white-space: nowrap; }
 .topbar .who { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--surface);
@@ -115,6 +115,9 @@ textarea { min-height: 64px; resize: vertical; }
 /* Accesso */
 .login-view { max-width: 420px; margin: 0 auto; padding: 12vh 16px 40px; }
 .login-card h1 { margin-top: 0; }
+dialog { width: min(400px, calc(100% - 32px)); color: var(--ink); }
+dialog::backdrop { background: rgba(0, 0, 0, .45); }
+dialog h2 { margin-top: 0; }
 
 .toast {
   position: fixed; left: 50%; transform: translateX(-50%); z-index: 10; max-width: calc(100% - 32px);
@@ -125,6 +128,7 @@ textarea { min-height: 64px; resize: vertical; }
 .toast.error { background: var(--bad); color: #fff; }
 
 @media (max-width: 420px) {
+  .topbar .who { display: none; }
   .gauge { padding: 10px 8px; }
   .gauge .v { font-size: 1.45rem; }
   .row3 { grid-template-columns: 1fr 1fr; }

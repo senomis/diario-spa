@@ -1,5 +1,5 @@
 // Accesso ai dati. Due implementazioni con la stessa interfaccia:
-//  - supabaseBackend: database e accesso con link via email su Supabase
+//  - supabaseBackend: database e accesso con email e password su Supabase
 //  - demoBackend: tutto in memoria (si perde ricaricando la pagina)
 
 export async function createBackend(url, key) {
@@ -33,15 +33,11 @@ async function supabaseBackend(url, key) {
       // Il callback viene rimandato: chiamare Supabase dentro onAuthStateChange può bloccarsi.
       sb.auth.onAuthStateChange((_event, session) => setTimeout(() => cb(session?.user ?? null)));
     },
-    // Solo per utenti già creati dal proprietario: niente registrazioni libere.
-    async sendLink(email) {
-      check(await sb.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname },
-      }));
+    async signIn(email, password) {
+      check(await sb.auth.signInWithPassword({ email, password }));
     },
-    async verifyCode(email, token) {
-      check(await sb.auth.verifyOtp({ email, token, type: 'email' }));
+    async changePassword(password) {
+      check(await sb.auth.updateUser({ password }));
     },
     async signOut() {
       await sb.auth.signOut();
@@ -132,8 +128,8 @@ async function demoBackend() {
     mode: 'demo',
     async getUser() { return user; },
     onAuthChange() {},
-    async sendLink() {},
-    async verifyCode() {},
+    async signIn() {},
+    async changePassword() {},
     async signOut() { location.reload(); },
 
     async loadAll() {

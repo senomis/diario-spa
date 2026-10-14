@@ -26,7 +26,7 @@ Guida per chi usa l'app: [`guida.html`](guida.html).
 |---|---|
 | Sito (HTML/JS statico, senza build) | GitHub Pages |
 | Database | Supabase – Postgres, con regole di sicurezza (RLS) |
-| Accesso | Supabase – Auth, link o codice via email (niente password) |
+| Accesso | Supabase – Auth (email + password, utenti creati dal proprietario) |
 | Promemoria | Google Calendar tramite Supabase Edge Function (*da fare*) |
 
 Il progetto Supabase gratuito **va in pausa dopo 7 giorni senza utilizzo** (si riattiva con un
@@ -53,32 +53,18 @@ configurato.
 2. **SQL Editor → New query**: incolla [`supabase/schema.sql`](supabase/schema.sql) e premi
    **Run**. Crea tabelle, regole di sicurezza e la riga delle impostazioni (vuota).
 
-### 2. Accesso
+### 2. Chiudi le registrazioni
 
-1. **Authentication → Sign In / Providers → Email**: lascia attivo il provider Email e
-   **disattiva “Allow new users to sign up”**. Così il link arriva solo agli utenti creati da te.
-2. **Authentication → URL Configuration**:
-   - *Site URL*: `https://senomis.github.io/diario-spa/`
-   - *Redirect URLs*: aggiungi `https://senomis.github.io/diario-spa/` e, per le prove in locale,
-     `http://localhost:8081/`.
-3. **Authentication → Emails → Magic Link**: perché l'email contenga anche il **codice** (utile
-   sull'iPhone se l'app è aggiunta alla schermata Home, dove il link si aprirebbe in Safari),
-   sostituisci il testo con qualcosa come:
-
-   ```html
-   <h2>Accesso a Diario SPA</h2>
-   <p><a href="{{ .ConfirmationURL }}">Entra nel diario</a></p>
-   <p>Oppure scrivi questo codice nell'app: <b>{{ .Token }}</b></p>
-   ```
-
-   Oggetto, per esempio: `Accesso a Diario SPA`.
+**Authentication → Sign In / Providers → Email**: lascia attivo il provider Email ma
+**disattiva “Allow new users to sign up”**. Così possono entrare solo gli utenti creati da te.
 
 ### 3. Familiari abilitati
 
 Per ogni persona servono **due** passi:
 
-1. **Authentication → Users → Add user → Create new user**: email, spunta *Auto Confirm User*.
-   La password non viene usata dall'app.
+1. **Authentication → Users → Add user → Create new user**: email e password, spunta
+   *Auto Confirm User*. Comunica la password all'interessato, che potrà cambiarla dall'app
+   (“Password” in alto).
 2. **SQL Editor**:
 
    ```sql
@@ -103,10 +89,8 @@ cartella `/ (root)`. Dopo un minuto l'app è su <https://senomis.github.io/diari
 
 ## Note
 
-- **Email di accesso**: il servizio email incluso in Supabase ha un limite molto basso di
-  messaggi l'ora. Va bene per pochi familiari, perché l'accesso resta attivo sul telefono
-  finché non si preme “Esci”. Se diventa scomodo, imposta un SMTP proprio in
-  *Authentication → Emails → SMTP Settings*.
+- **Accesso**: resta attivo sul telefono finché non si preme “Esci”. Se qualcuno dimentica la
+  password, impostane una nuova da *Authentication → Users* (menu dell'utente).
 - **Aggiornamenti dell'app**: a ogni modifica di JS o CSS aggiorna il `?v=` negli indirizzi
   (`index.html`, `guida.html` e gli `import` in `js/app.js`), altrimenti i telefoni possono
   tenere in cache i file vecchi.
