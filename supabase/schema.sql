@@ -60,7 +60,7 @@ create table public.tasks (
   every_days    integer not null check (every_days > 0),
   notes         text not null default '',
   last_done     timestamptz,
-  gcal_event_id text,  -- evento Google Calendar della prossima scadenza (Edge Function)
+  gcal_event_id text,  -- evento Google Calendar della prossima scadenza (script Apps Script)
   created_at    timestamptz not null default now()
 );
 
